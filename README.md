@@ -1,5 +1,7 @@
 # Real-Time Gaming Leaderboard
 
+DEMO: https://lb.tools64.net/
+
 Leaderboard service: auth, scores, and real-time updates across multiple API instances.
 
 ## Quick start
