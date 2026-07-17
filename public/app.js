@@ -2,17 +2,48 @@
    Leaderboard Win95 Demo - UI Layer (SDK-backed)
    ═══════════════════════════════════════════════════════════ */
 
-const WS_URLS = {
-  a: 'ws://localhost:3001',
-  b: 'ws://localhost:3002',
-  c: 'ws://localhost:3001',
-};
+/** Same-origin WS base (wss:// on HTTPS pages — avoids mixed content / localhost hardcoding). */
+function pageWsOrigin() {
+  const { protocol, hostname, port } = window.location;
+  const wsProto = protocol === 'https:' ? 'wss:' : 'ws:';
+  const originPort = port && port !== '80' && port !== '443' ? `:${port}` : '';
+  return `${wsProto}//${hostname}${originPort}`;
+}
 
-const REPLICA_LABELS = {
-  a: 'api-1 :3001',
-  b: 'api-2 :3002',
-  c: 'api-1 :3001',
-};
+/**
+ * Local HTTP demo pins clients to replica ports for cross-instance fan-out demos.
+ * Behind HTTPS / reverse proxy (e.g. lb.tools64.net), use same-origin WSS for all.
+ */
+function isLocalHttpReplicaDemo() {
+  const { protocol, hostname } = window.location;
+  return (
+    protocol === 'http:' &&
+    (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]')
+  );
+}
+
+const WS_URLS = isLocalHttpReplicaDemo()
+  ? {
+      a: 'ws://localhost:3001',
+      b: 'ws://localhost:3002',
+      c: 'ws://localhost:3001',
+    }
+  : (() => {
+      const origin = pageWsOrigin();
+      return { a: origin, b: origin, c: origin };
+    })();
+
+const REPLICA_LABELS = isLocalHttpReplicaDemo()
+  ? {
+      a: 'api-1 :3001',
+      b: 'api-2 :3002',
+      c: 'api-1 :3001',
+    }
+  : {
+      a: 'via proxy',
+      b: 'via proxy',
+      c: 'via proxy',
+    };
 
 /** @type {Record<string, { sdk: LeaderboardClient, gameId: string|null, leaderboard: Array<{ rank: number, player_id: string, email: string, score: number, _anim: string }> }>} */
 const clients = {
@@ -791,6 +822,20 @@ async function runDemo() {
 }
 
 // ── Init ────────────────────────────────────────────────
+
+if (!isLocalHttpReplicaDemo()) {
+  const titleMap = {
+    'win-client-a': `Client A (${REPLICA_LABELS.a})`,
+    'win-lb-a': `Leaderboard A (${REPLICA_LABELS.a})`,
+    'win-client-c': `Client C (${REPLICA_LABELS.c})`,
+    'win-client-b': `Client B (${REPLICA_LABELS.b})`,
+    'win-lb-b': `Leaderboard B (${REPLICA_LABELS.b})`,
+  };
+  for (const [winId, text] of Object.entries(titleMap)) {
+    const node = document.querySelector(`#${winId} .win95-titlebar-text`);
+    if (node) node.textContent = text;
+  }
+}
 
 for (const cid of CLIENT_IDS) {
   clients[cid]._loggedIn = false;
