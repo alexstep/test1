@@ -528,9 +528,14 @@ function applyUpdate(cid, msg) {
     _anim: anim,
   });
 
-  lb.sort((a, b) => a.rank - b.rank);
+  // Delta updates only carry the changed player's server rank; recompute locally
+  // so neighbors don't keep stale # values and sort stays score-ordered.
+  lb.sort((a, b) => b.score - a.score || (a.player_id < b.player_id ? -1 : a.player_id > b.player_id ? 1 : 0));
+  for (let i = 0; i < lb.length; i++) lb[i].rank = i + 1;
+
+  const displayRank = lb.find((e) => e.player_id === msg.player_id)?.rank ?? msg.new_rank;
   const lbStatusEl = el(`lb-status-${cid}`);
-  if (lbStatusEl) lbStatusEl.textContent = `Updated: ${msg.email} → #${msg.new_rank}`;
+  if (lbStatusEl) lbStatusEl.textContent = `Updated: ${msg.email} → #${displayRank}`;
   renderLeaderboard(cid);
 
   setTimeout(() => {

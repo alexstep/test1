@@ -53,7 +53,7 @@ let heartbeatTimer = null;
 /** @type {Promise<MessagePort>|null} */
 let transportInitPromise = null;
 
-/** Coalesce burst `leaderboard-update` events: last wins per `(clientId, gameId)`. */
+/** Coalesce burst `leaderboard-update` events: last wins per `(clientId, gameId, player_id)`. */
 /** @type {Map<string, { clients: Set<LeaderboardClient>, detail: unknown }>} */
 const pendingUpdateFlush = new Map();
 let updateFlushScheduled = false;
@@ -187,7 +187,11 @@ function enqueueLeaderboardUpdate(clientId, clients, detail) {
     detail && typeof detail === 'object' && 'gameId' in detail
       ? String(/** @type {{ gameId: unknown }} */ (detail).gameId)
       : '';
-  const key = `${clientId}:${gameId}`;
+  const playerId =
+    detail && typeof detail === 'object' && 'player_id' in detail
+      ? String(/** @type {{ player_id: unknown }} */ (detail).player_id)
+      : '';
+  const key = `${clientId}:${gameId}:${playerId}`;
   pendingUpdateFlush.set(key, { clients, detail });
   if (!updateFlushScheduled) {
     updateFlushScheduled = true;
