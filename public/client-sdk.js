@@ -34,6 +34,8 @@
 
 /** Must stay in sync with `PROTOCOL_VERSION` in `client-sdk.worker.js`. */
 const PROTOCOL_VERSION = 1;
+/** Bump when static SDK/worker assets change so browsers reload cached scripts. */
+const SDK_ASSET_VERSION = 3;
 const HEARTBEAT_MS = 10_000;
 const DEFAULT_RPC_TIMEOUT_MS = 15_000;
 const MIN_PASSWORD_LEN = 8;
@@ -263,12 +265,14 @@ function ensureTransport() {
   transportInitPromise = new Promise((resolve, reject) => {
     try {
       if (typeof SharedWorker !== 'undefined') {
-        const shared = new SharedWorker('/client-sdk.worker.js', { name: 'leaderboard-sdk' });
+        const shared = new SharedWorker(`/client-sdk.worker.js?v=${SDK_ASSET_VERSION}`, {
+          name: 'leaderboard-sdk',
+        });
         transportPort = shared.port;
         transportPort.onmessage = handleTransportMessage;
         transportPort.start();
       } else {
-        dedicatedWorker = new Worker('/client-sdk.worker.js');
+        dedicatedWorker = new Worker(`/client-sdk.worker.js?v=${SDK_ASSET_VERSION}`);
         transportPort = /** @type {MessagePort} */ ({
           postMessage: (msg) => dedicatedWorker.postMessage(msg),
           start: () => {},
@@ -578,3 +582,4 @@ window.addEventListener('pageshow', (event) => {
 window.LeaderboardClient = LeaderboardClient;
 window.LeaderboardClientPasswordPrehash = passwordPrehash;
 window.LeaderboardClientProtocolVersion = PROTOCOL_VERSION;
+window.LeaderboardClientAssetVersion = SDK_ASSET_VERSION;

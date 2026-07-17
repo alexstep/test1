@@ -54,6 +54,8 @@ const clients = {
 
 const GAMES_POLL_MS = 15_000;
 const CLIENT_IDS = Object.keys(clients);
+/** Bumped when demo leaderboard logic changes — check in DevTools if tables look stale. */
+const APP_ASSET_VERSION = 3;
 
 /** Server WS close codes (see spec/02-api.md). */
 const WS_CLOSE_REASONS = {
@@ -196,7 +198,7 @@ function setupSdkListeners(cid) {
       `(${replica})`);
     console.groupEnd();
 
-    c.leaderboard = (d.entries || []).map((e) => ({ ...e, _anim: '' }));
+    c.leaderboard = normalizeLeaderboard(mapSnapshotEntries(d.entries));
     const lbStatus = el(`lb-status-${cid}`);
     if (lbStatus) lbStatus.textContent = `Snapshot: ${c.leaderboard.length} entries`;
     renderLeaderboard(cid);
@@ -503,17 +505,49 @@ function waitForWsAuth(cid, signal, timeoutMs = 15_000) {
 
 // ── Leaderboard State ───────────────────────────────────
 
+/** Coerce WS/Redis payload scores to numbers (Redis often returns strings). */
+function toScore(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function compareLeaderboardEntries(a, b) {
+  const byScore = toScore(b.score) - toScore(a.score);
+  if (byScore !== 0) return byScore;
+  return a.player_id < b.player_id ? -1 : a.player_id > b.player_id ? 1 : 0;
+}
+
+/** Sort by score desc, tie-break player_id, assign contiguous ranks. Mutates `lb`. */
+function normalizeLeaderboard(lb) {
+  for (const entry of lb) entry.score = toScore(entry.score);
+  lb.sort(compareLeaderboardEntries);
+  for (let i = 0; i < lb.length; i++) lb[i].rank = i + 1;
+  return lb;
+}
+
+function mapSnapshotEntries(entries) {
+  return (entries || []).map((e) => ({
+    rank: e.rank,
+    player_id: e.player_id,
+    email: e.email,
+    score: toScore(e.score),
+    _anim: '',
+  }));
+}
+
 function applyUpdate(cid, msg) {
   const c = clients[cid];
   const lb = c.leaderboard;
   const idx = lb.findIndex((e) => e.player_id === msg.player_id);
+  const newRank = Number(msg.new_rank);
+  const prevRank = msg.previous_rank != null ? Number(msg.previous_rank) : null;
 
   let anim = '';
   if (idx === -1) {
     anim = 'rank-new';
-  } else if (msg.previous_rank !== null && msg.new_rank < msg.previous_rank) {
+  } else if (prevRank != null && Number.isFinite(newRank) && newRank < prevRank) {
     anim = 'rank-up';
-  } else if (msg.previous_rank !== null && msg.new_rank > msg.previous_rank) {
+  } else if (prevRank != null && Number.isFinite(newRank) && newRank > prevRank) {
     anim = 'rank-down';
   } else {
     anim = 'rank-new';
@@ -524,16 +558,15 @@ function applyUpdate(cid, msg) {
     rank: msg.new_rank,
     player_id: msg.player_id,
     email: msg.email,
-    score: msg.new_score,
+    score: toScore(msg.new_score),
     _anim: anim,
   });
 
   // Delta updates only carry the changed player's server rank; recompute locally
   // so neighbors don't keep stale # values and sort stays score-ordered.
-  lb.sort((a, b) => b.score - a.score || (a.player_id < b.player_id ? -1 : a.player_id > b.player_id ? 1 : 0));
-  for (let i = 0; i < lb.length; i++) lb[i].rank = i + 1;
+  normalizeLeaderboard(lb);
 
-  const displayRank = lb.find((e) => e.player_id === msg.player_id)?.rank ?? msg.new_rank;
+  const displayRank = lb.find((e) => e.player_id === msg.player_id)?.rank ?? newRank;
   const lbStatusEl = el(`lb-status-${cid}`);
   if (lbStatusEl) lbStatusEl.textContent = `Updated: ${msg.email} → #${displayRank}`;
   renderLeaderboard(cid);
@@ -546,6 +579,7 @@ function applyUpdate(cid, msg) {
 
 function renderLeaderboard(cid) {
   const c = clients[cid];
+  normalizeLeaderboard(c.leaderboard);
   const table = el(`lb-table-${cid}`);
   if (!table) return;
   const tbody = table.querySelector('tbody');
@@ -583,7 +617,7 @@ async function restoreState(cid) {
         }
         if (state.snapshots?.[active.gameId]) {
           const snap = state.snapshots[active.gameId];
-          c.leaderboard = (snap.entries || []).map((e) => ({ ...e, _anim: '' }));
+          c.leaderboard = normalizeLeaderboard(mapSnapshotEntries(snap.entries));
           const lbStatus = el(`lb-status-${cid}`);
           if (lbStatus) lbStatus.textContent = `Snapshot: ${c.leaderboard.length} entries`;
           renderLeaderboard(cid);
@@ -852,6 +886,8 @@ updateAllUIState();
 refreshTaskbar();
 
 void Promise.all(CLIENT_IDS.map((cid) => restoreState(cid)));
+
+console.info('[Leaderboard demo] app.js v%s, SDK v%s', APP_ASSET_VERSION, window.LeaderboardClientAssetVersion);
 
 window.addEventListener('focus', () => {
   if (demoRunning) return;

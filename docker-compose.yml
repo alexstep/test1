@@ -28,6 +28,8 @@ services:
   api-1:
     build: .
     hostname: api-1
+    volumes:
+      - ./public:/app/public:ro
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-leaderboard}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-leaderboard}
       REDIS_URL: redis://redis:6379
@@ -55,6 +57,8 @@ services:
   api-2:
     build: .
     hostname: api-2
+    volumes:
+      - ./public:/app/public:ro
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-leaderboard}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-leaderboard}
       REDIS_URL: redis://redis:6379
