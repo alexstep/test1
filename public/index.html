@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboard - Win95 Demo</title>
+  <link rel="stylesheet" href="/vendor/win95.css">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main id="desktop">
+    <!-- ═══════════ Client A Window ═══════════ -->
+    <dialog class="win95-window" open id="win-client-a" style="left:20px;top:20px;width:380px">
+      <div class="win95-titlebar" data-drag="win-client-a">
+        <span class="win95-titlebar-text">Client A (api-1 :3001)</span>
+        <div class="win95-titlebar-buttons">
+          <button class="win95-titlebar-btn" data-minimize="win-client-a">_</button>
+        </div>
+      </div>
+      <section class="win95-body" id="body-client-a">
+        <section aria-label="Auth">
+          <fieldset class="win95-fieldset">
+            <legend>Auth</legend>
+            <form autocomplete="off" onsubmit="return false" spellcheck="false">
+              <input type="text" style="display:none" tabindex="-1" aria-hidden="true">
+              <input type="password" style="display:none" tabindex="-1" aria-hidden="true">
+              <div class="form-row">
+                <label for="email-a">Email</label>
+                <input type="text" id="email-a" name="email-a" placeholder="user-a@test.com" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+              </div>
+              <div class="form-row">
+                <label for="password-a">Password</label>
+                <input type="password" id="password-a" name="password-a" placeholder="min 8 chars" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+              </div>
+              <div class="btn-row">
+                <button type="button" class="btn" onclick="clientAction('a','signup')">Signup</button>
+                <button type="button" class="btn" onclick="clientAction('a','login')">Login</button>
+              </div>
+              <p class="status-line" id="auth-status-a"></p>
+            </form>
+          </fieldset>
+        </section>
+        <section aria-label="Games">
+          <fieldset class="win95-fieldset" id="games-fs-a">
+            <legend>Games</legend>
+            <div class="form-row">
+              <select id="game-select-a" disabled><option value="">— select game —</option></select>
+              <button class="btn btn-sm" onclick="clientAction('a','refreshGames')" disabled>↻</button>
+            </div>
+            <div class="form-row">
+              <input type="text" id="new-game-a" placeholder="New game name" autocomplete="off" disabled>
+              <button class="btn btn-sm" onclick="clientAction('a','createGame')" disabled>Create</button>
+            </div>
+          </fieldset>
+        </section>
+        <section aria-label="Play a Match">
+          <fieldset class="win95-fieldset" id="match-fs-a">
+            <legend>Play a Match</legend>
+            <div class="form-row">
+              <input type="number" id="score-a" placeholder="Score (or random)" min="1" autocomplete="off" disabled>
+              <button class="btn" onclick="clientAction('a','submitMatch')" disabled>▶ Play</button>
+            </div>
+            <p class="status-line" id="match-status-a"></p>
+          </fieldset>
+        </section>
+        <output class="ws-status" id="ws-status-a">WS: disconnected</output>
+      </section>
+    </dialog>
+
+    <!-- ═══════════ Leaderboard A Window ═══════════ -->
+    <dialog class="win95-window" open id="win-lb-a" style="left:20px;top:420px;width:380px">
+      <div class="win95-titlebar" data-drag="win-lb-a">
+        <span class="win95-titlebar-text">Leaderboard A (api-1 :3001)</span>
+        <div class="win95-titlebar-buttons">
+          <button class="win95-titlebar-btn" data-minimize="win-lb-a">_</button>
+        </div>
+      </div>
+      <section class="win95-body" aria-label="Leaderboard">
+        <table class="win95-table" id="lb-table-a">
+          <thead><tr><th scope="col">#</th><th scope="col">Player</th><th scope="col">Score</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="status-line" id="lb-status-a">Waiting for WS…</p>
+      </section>
+    </dialog>
+
+    <!-- ═══════════ Client C Window ═══════════ -->
+    <dialog class="win95-window" open id="win-client-c" style="left:780px;top:20px;width:380px">
+      <div class="win95-titlebar" data-drag="win-client-c">
+        <span class="win95-titlebar-text">Client C (api-1 :3001)</span>
+        <div class="win95-titlebar-buttons">
+          <button class="win95-titlebar-btn" data-minimize="win-client-c">_</button>
+        </div>
+      </div>
+      <section class="win95-body" id="body-client-c">
+        <section aria-label="Auth">
+          <fieldset class="win95-fieldset">
+            <legend>Auth</legend>
+            <form autocomplete="off" onsubmit="return false" spellcheck="false">
+              <input type="text" style="display:none" tabindex="-1" aria-hidden="true">
+              <input type="password" style="display:none" tabindex="-1" aria-hidden="true">
+              <div class="form-row">
+                <label for="email-c">Email</label>
+                <input type="text" id="email-c" name="email-c" placeholder="user-c@test.com" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+              </div>
+              <div class="form-row">
+                <label for="password-c">Password</label>
+                <input type="password" id="password-c" name="password-c" placeholder="min 8 chars" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+              </div>
+              <div class="btn-row">
+                <button type="button" class="btn" onclick="clientAction('c','signup')">Signup</button>
+                <button type="button" class="btn" onclick="clientAction('c','login')">Login</button>
+              </div>
+              <p class="status-line" id="auth-status-c"></p>
+            </form>
+          </fieldset>
+        </section>
+        <section aria-label="Games">
+          <fieldset class="win95-fieldset" id="games-fs-c">
+            <legend>Games</legend>
+            <div class="form-row">
+              <select id="game-select-c" disabled><option value="">— select game —</option></select>
+              <button class="btn btn-sm" onclick="clientAction('c','refreshGames')" disabled>↻</button>
+            </div>
+            <div class="form-row">
+              <input type="text" id="new-game-c" placeholder="New game name" autocomplete="off" disabled>
+              <button class="btn btn-sm" onclick="clientAction('c','createGame')" disabled>Create</button>
+            </div>
+          </fieldset>
+        </section>
+        <section aria-label="Play a Match">
+          <fieldset class="win95-fieldset" id="match-fs-c">
+            <legend>Play a Match</legend>
+            <div class="form-row">
+              <input type="number" id="score-c" placeholder="Score (or random)" min="1" autocomplete="off" disabled>
+              <button class="btn" onclick="clientAction('c','submitMatch')" disabled>▶ Play</button>
+            </div>
+            <p class="status-line" id="match-status-c"></p>
+          </fieldset>
+        </section>
+        <output class="ws-status" id="ws-status-c">WS: disconnected</output>
+      </section>
+    </dialog>
+
+    <!-- ═══════════ Client B Window ═══════════ -->
+    <dialog class="win95-window" open id="win-client-b" style="left:400px;top:20px;width:380px">
+      <div class="win95-titlebar" data-drag="win-client-b">
+        <span class="win95-titlebar-text">Client B (api-2 :3002)</span>
+        <div class="win95-titlebar-buttons">
+          <button class="win95-titlebar-btn" data-minimize="win-client-b">_</button>
+        </div>
+      </div>
+      <section class="win95-body" id="body-client-b">
+        <section aria-label="Auth">
+          <fieldset class="win95-fieldset">
+            <legend>Auth</legend>
+            <form autocomplete="off" onsubmit="return false" spellcheck="false">
+              <input type="text" style="display:none" tabindex="-1" aria-hidden="true">
+              <input type="password" style="display:none" tabindex="-1" aria-hidden="true">
+              <div class="form-row">
+                <label for="email-b">Email</label>
+                <input type="text" id="email-b" name="email-b" placeholder="user-b@test.com" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+              </div>
+              <div class="form-row">
+                <label for="password-b">Password</label>
+                <input type="password" id="password-b" name="password-b" placeholder="min 8 chars" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+              </div>
+              <div class="btn-row">
+                <button type="button" class="btn" onclick="clientAction('b','signup')">Signup</button>
+                <button type="button" class="btn" onclick="clientAction('b','login')">Login</button>
+              </div>
+              <p class="status-line" id="auth-status-b"></p>
+            </form>
+          </fieldset>
+        </section>
+        <section aria-label="Games">
+          <fieldset class="win95-fieldset" id="games-fs-b">
+            <legend>Games</legend>
+            <div class="form-row">
+              <select id="game-select-b" disabled><option value="">— select game —</option></select>
+              <button class="btn btn-sm" onclick="clientAction('b','refreshGames')" disabled>↻</button>
+            </div>
+            <div class="form-row">
+              <input type="text" id="new-game-b" placeholder="New game name" autocomplete="off" disabled>
+              <button class="btn btn-sm" onclick="clientAction('b','createGame')" disabled>Create</button>
+            </div>
+          </fieldset>
+        </section>
+        <section aria-label="Play a Match">
+          <fieldset class="win95-fieldset" id="match-fs-b">
+            <legend>Play a Match</legend>
+            <div class="form-row">
+              <input type="number" id="score-b" placeholder="Score (or random)" min="1" autocomplete="off" disabled>
+              <button class="btn" onclick="clientAction('b','submitMatch')" disabled>▶ Play</button>
+            </div>
+            <p class="status-line" id="match-status-b"></p>
+          </fieldset>
+        </section>
+        <output class="ws-status" id="ws-status-b">WS: disconnected</output>
+      </section>
+    </dialog>
+
+    <!-- ═══════════ Leaderboard B Window ═══════════ -->
+    <dialog class="win95-window" open id="win-lb-b" style="left:400px;top:420px;width:380px">
+      <div class="win95-titlebar" data-drag="win-lb-b">
+        <span class="win95-titlebar-text">Leaderboard B (api-2 :3002)</span>
+        <div class="win95-titlebar-buttons">
+          <button class="win95-titlebar-btn" data-minimize="win-lb-b">_</button>
+        </div>
+      </div>
+      <section class="win95-body" aria-label="Leaderboard">
+        <table class="win95-table" id="lb-table-b">
+          <thead><tr><th scope="col">#</th><th scope="col">Player</th><th scope="col">Score</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="status-line" id="lb-status-b">Waiting for WS…</p>
+      </section>
+    </dialog>
+  </main>
+
+  <!-- ═══════════ Taskbar ═══════════ -->
+  <footer id="taskbar">
+    <nav aria-label="Application menu">
+      <button type="button" id="start-btn" class="btn">▣ Start</button>
+      <a id="docs-btn" class="btn" href="/docs" target="_blank" rel="noopener">Docs</a>
+    </nav>
+    <nav id="taskbar-items" aria-label="Open windows"></nav>
+    <time id="taskbar-clock"></time>
+  </footer>
+
+  <script src="/client-sdk.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

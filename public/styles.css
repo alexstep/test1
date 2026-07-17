@@ -1,0 +1,277 @@
+/* ── Reset & Desktop ─────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+main, header, section, dialog, footer, nav, time, output { margin: 0; padding: 0; }
+.win95-body > section { margin: 0; padding: 0; }
+body {
+  font-family: "MS Sans Serif", Tahoma, Verdana, sans-serif;
+  font-size: 12px;
+  background: teal;
+}
+#desktop {
+  position: absolute;
+  inset: 0 0 32px 0;
+  overflow: auto;
+}
+
+/* ── Win95 Windows ───────────────────────────────────── */
+.win95-window {
+  position: absolute;
+  background: silver;
+  border: 2px solid;
+  border-color: #dfdfdf #000 #000 #dfdfdf;
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #808080;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+dialog.win95-window {
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+  color: inherit;
+}
+dialog.win95-window[open] {
+  display: flex;
+  flex-direction: column;
+}
+dialog.win95-window:not([open]) {
+  display: none;
+}
+.win95-window.active { z-index: 10; }
+.win95-window.minimized .win95-body { display: none; }
+
+.win95-titlebar {
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font-weight: bold;
+  font-size: 12px;
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  cursor: default;
+  user-select: none;
+}
+.win95-window:not(.active) .win95-titlebar {
+  background: linear-gradient(90deg, #808080, #b0b0b0);
+}
+.win95-titlebar-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.win95-titlebar-buttons { display: flex; gap: 2px; }
+.win95-titlebar-btn {
+  width: 16px; height: 14px;
+  font-size: 9px; line-height: 14px;
+  text-align: center; padding: 0;
+  background: silver;
+  border: 1px solid;
+  border-color: #dfdfdf #000 #000 #dfdfdf;
+  cursor: pointer;
+}
+
+.win95-body {
+  padding: 6px;
+  overflow-y: auto;
+  max-height: 360px;
+}
+
+/* ── Fieldsets / Forms ───────────────────────────────── */
+.win95-fieldset {
+  border: 1px solid #808080;
+  box-shadow: 1px 1px 0 #fff;
+  padding: 6px;
+  margin: 0 0 4px 0;
+}
+.win95-fieldset legend {
+  font-size: 11px;
+  padding: 0 4px;
+  color: #000;
+}
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.form-row label {
+  color: #000;
+  min-width: 56px;
+  font-size: 11px;
+}
+.form-row input, .form-row select {
+  flex: 1;
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid;
+  border-color: #808080 #fff #fff #808080;
+  background: #fff;
+  color: #000;
+}
+.btn-row { display: flex; gap: 4px; margin-top: 2px; }
+
+.btn {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 12px;
+  background: silver;
+  border: 2px solid;
+  border-color: #dfdfdf #000 #000 #dfdfdf;
+  box-shadow: inset 1px 1px 0 #fff;
+  cursor: pointer;
+  color: #000;
+}
+.btn:active {
+  border-color: #000 #dfdfdf #dfdfdf #000;
+  box-shadow: inset 1px 1px 0 #808080;
+}
+.btn-sm { padding: 1px 6px; font-size: 10px; }
+
+.win95-fieldset.ui-disabled {
+  opacity: 0.55;
+}
+.win95-fieldset.ui-disabled input,
+.win95-fieldset.ui-disabled select,
+.win95-fieldset.ui-disabled button:not(.win95-titlebar-btn) {
+  cursor: not-allowed;
+}
+input:disabled,
+select:disabled,
+button:disabled:not(.win95-titlebar-btn) {
+  color: #808080;
+  background: #d4d4d4;
+}
+
+.status-line {
+  font-size: 10px;
+  color: #000;
+  margin-top: 2px;
+  margin-bottom: 0;
+  min-height: 14px;
+  border: 1px solid;
+  border-color: #808080 #fff #fff #808080;
+  padding: 1px 4px;
+  background: #fff;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+output.ws-status {
+  display: block;
+}
+.ws-status {
+  font-size: 10px;
+  padding: 2px 4px;
+  margin-top: 4px;
+  color: #800;
+  border-top: 1px solid #808080;
+}
+.ws-status.connected { color: #080; }
+
+/* ── Leaderboard Table ───────────────────────────────── */
+.win95-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  color: #000;
+}
+.win95-table th {
+  background: silver;
+  border: 1px solid;
+  border-color: #dfdfdf #808080 #808080 #dfdfdf;
+  padding: 2px 6px;
+  text-align: left;
+  font-weight: bold;
+}
+.win95-table td {
+  padding: 2px 6px;
+  border-bottom: 1px solid #c0c0c0;
+  background: #fff;
+}
+.win95-table tr.rank-up td { animation: flash-green 1.2s ease-out; }
+.win95-table tr.rank-down td { animation: flash-red 1.2s ease-out; }
+.win95-table tr.rank-new td { animation: flash-blue 1.2s ease-out; }
+
+@keyframes flash-green {
+  0%   { background: #90ee90; }
+  100% { background: #fff; }
+}
+@keyframes flash-red {
+  0%   { background: #ffb0b0; }
+  100% { background: #fff; }
+}
+@keyframes flash-blue {
+  0%   { background: #add8e6; }
+  100% { background: #fff; }
+}
+
+/* ── Taskbar ─────────────────────────────────────────── */
+#taskbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 32px;
+  background: silver;
+  border-top: 2px solid;
+  border-color: #dfdfdf #000 #000 #dfdfdf;
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  gap: 4px;
+  z-index: 100;
+}
+#taskbar nav {
+  display: flex;
+  align-items: center;
+}
+#start-btn,
+#docs-btn {
+  font-weight: bold;
+  padding: 2px 8px;
+  height: 24px;
+  text-decoration: none;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+#start-btn.demo-running {
+  border-color: #000 #dfdfdf #dfdfdf #000;
+  box-shadow: inset 1px 1px 0 #808080;
+}
+#taskbar-items {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  overflow: hidden;
+  align-items: center;
+}
+.taskbar-item {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 2px 8px;
+  max-width: 160px;
+  background: silver;
+  border: 1px solid;
+  border-color: #dfdfdf #000 #000 #dfdfdf;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #000;
+  height: 22px;
+}
+.taskbar-item.active {
+  border-color: #000 #dfdfdf #dfdfdf #000;
+  box-shadow: inset 1px 1px 0 #808080;
+  font-weight: bold;
+}
+#taskbar-clock {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid;
+  border-color: #808080 #fff #fff #808080;
+  color: #000;
+  min-width: 64px;
+  text-align: center;
+}

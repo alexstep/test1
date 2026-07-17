@@ -1,0 +1,61 @@
+---
+description: NestJS + Bun stack conventions for the Leaderboard assignment.
+globs: "**/*.ts, **/docker-compose*.yml, **/Dockerfile*, **/package.json, **/.env.example"
+alwaysApply: true
+---
+
+# NestJS + Bun Stack
+
+This project runs **NestJS on Bun runtime** (`oven/bun:1-alpine`). This is an intentional human deviation from spec DQ-8, documented in NOTES.md.
+
+## Runtime & package manager
+
+- **Runtime**: `bun dist/main.js` (Bun as both package manager and runtime).
+- **Package manager**: `bun install`, `bun run <script>`.
+- **Reverse proxy**: Angie (`docker.angie.software/angie:latest`) - NOT nginx.
+- Do **not** use `Bun.serve()`, `bun:sqlite` - we use NestJS HTTP adapter and TypeORM+pg respectively.
+- **Redis**: Bun native `RedisClient` from `"bun"` (not `ioredis`). Pub/sub is experimental in Bun - see NOTES.md.
+
+## NestJS conventions
+
+- Module-based architecture: feature modules with clear boundaries.
+- Controllers handle HTTP/WS routing only; business logic in services.
+- DTOs with `class-validator` + `class-transformer` for all external input.
+- Guards for auth (`@UseGuards(JwtAuthGuard)`); WebSocket auth via custom guard or middleware.
+- Config via `@nestjs/config` - no hardcoded secrets.
+
+## Data layer
+
+- **PostgreSQL** via TypeORM (`@nestjs/typeorm`).
+- Schema changes via **TypeORM migrations** - run in CI and document in README.
+- **Redis** via Bun native `RedisClient` (`import { RedisClient } from "bun"`) for pub/sub and leaderboard sorted sets.
+- Postgres is source of truth; Redis is not the primary score store.
+
+## WebSockets & real-time
+
+- WebSocket via raw `ws` (custom HTTP upgrade in `LeaderboardGateway`) - not Nest `@WebSocketGateway` / Socket.IO.
+- Cross-instance broadcast **must** use Redis pub/sub - lazy per-game subscribe/unsubscribe (first/last WS client per game), publish on score changes.
+- Authenticate WebSocket (first-message JWT per NOTES.md) before joining leaderboard rooms.
+
+## Docker & local dev
+
+- `docker-compose.yml` provides PostgreSQL, Redis, api-1, api-2, and Angie.
+- Two explicit replicas (`api-1`, `api-2`) behind Angie reverse proxy on port 80.
+- Also expose :3001 and :3002 for direct replica access.
+- Env vars via `.env` (gitignored) + `.env.example` (committed, no real secrets).
+
+## Testing
+
+- Bun test runner (`bun test` / `bun:test`) for unit and integration tests.
+- E2E tests against running docker-compose stack where applicable.
+
+## Scripts (expected in package.json)
+
+```bash
+bun run lint        # biome
+bun run typecheck   # tsc --noEmit
+bun run test        # bun test
+bun run build       # nest build (tsc via NestJS CLI)
+```
+
+Use `bun run --if-present <script>` in verify gate when scripts may not exist yet during scaffold phase.

@@ -1,0 +1,5 @@
+preload = ["./scripts/bun-lua-preload.ts"]
+
+[test]
+root = "./src"
+preload = ["./scripts/bun-lua-preload.ts"]

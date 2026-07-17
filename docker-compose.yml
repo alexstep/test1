@@ -1,0 +1,98 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-leaderboard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-leaderboard}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-leaderboard}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    ports:
+      - "6379:6379"
+
+  api-1:
+    build: .
+    hostname: api-1
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-leaderboard}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-leaderboard}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-random-string}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-604800}
+      DB_ENCRYPTION_KEY_V1: ${DB_ENCRYPTION_KEY_V1:-yj9w/0GYklBVY1Ox7zUC450CwX+EgzsqI5c7u+63T4M=}
+      DB_ENCRYPTION_KEY_ACTIVE: ${DB_ENCRYPTION_KEY_ACTIVE:-1}
+      METRICS_TOKEN: ${METRICS_TOKEN:-change-this-metrics-token}
+      PORT: "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    ports:
+      - "3001:3000"
+
+  api-2:
+    build: .
+    hostname: api-2
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-leaderboard}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-leaderboard}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-random-string}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-604800}
+      DB_ENCRYPTION_KEY_V1: ${DB_ENCRYPTION_KEY_V1:-yj9w/0GYklBVY1Ox7zUC450CwX+EgzsqI5c7u+63T4M=}
+      DB_ENCRYPTION_KEY_ACTIVE: ${DB_ENCRYPTION_KEY_ACTIVE:-1}
+      METRICS_TOKEN: ${METRICS_TOKEN:-change-this-metrics-token}
+      PORT: "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # Serialize startup so only api-1 creates/runs TypeORM migrations on a fresh DB.
+      api-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    ports:
+      - "3002:3000"
+
+  angie:
+    image: docker.angie.software/angie:latest
+    volumes:
+      - ./angie/angie.conf:/etc/angie/http.d/default.conf:ro
+    depends_on:
+      api-1:
+        condition: service_healthy
+      api-2:
+        condition: service_healthy
+    ports:
+      - "1111:80"
+
+volumes:
+  postgres_data:

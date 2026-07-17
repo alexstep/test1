@@ -1,0 +1,59 @@
+---
+description: Backend zone rules for NestJS Leaderboard service.
+globs: "src/**/*.ts, test/**/*.ts, **/migrations/**/*.ts"
+alwaysApply: false
+---
+
+# Zone: Backend (NestJS)
+
+## Layered architecture
+
+```
+Controller  →  Service  →  Repository / TypeORM
+     ↓            ↓
+  Guards      Domain logic
+  Pipes       Transactions
+  DTOs        Event emission
+```
+
+- Controllers: route definitions, status codes, DTO binding - no business rules.
+- Services: business logic, orchestration, pub/sub publish, cache invalidation.
+- Repositories / TypeORM entities: data access only.
+
+## Validation & errors
+
+- All request bodies and query params validated via DTOs + `ValidationPipe` (global `whitelist: true`, `forbidNonWhitelisted: true`).
+- Use NestJS exception filters or built-in exceptions (`BadRequestException`, `UnauthorizedException`, etc.).
+- Never return stack traces or internal errors to clients in production.
+
+## Database
+
+- TypeORM entities with explicit column types and indexes on leaderboard query columns.
+- Migrations are versioned and reversible where practical.
+- No raw SQL unless justified in `NOTES.md` (prefer QueryBuilder or repository methods).
+- Use transactions for multi-step score updates.
+
+## Redis pub/sub
+
+- Channel naming: `leaderboard-updates:{gameId}` (per game).
+- Lazy subscribe: `SUBSCRIBE` on first WS client for that game on this instance.
+- Lazy unsubscribe: `UNSUBSCRIBE` when last client disconnects from that game room.
+- Use a dedicated subscriber Redis connection (separate from the command connection).
+- Payloads: minimal JSON (user id, score, rank delta) - no PII beyond what spec requires.
+
+## Logging
+
+- Use NestJS `Logger` or structured logger (pino via `nestjs-pino` if added).
+- Log levels: `error` for failures, `warn` for retries, `debug` for dev-only.
+- Never log passwords, tokens, or full JWT payloads.
+
+## Auth
+
+- JWT strategy for REST; validate on WebSocket `connection` or first message per spec.
+- Hash passwords with argon2 (preferred) or bcrypt on registration/login flows.
+
+## Testing
+
+- Unit tests for services (mock repositories and Redis).
+- Integration tests for controllers with supertest.
+- Document manual cross-replica test steps in README when automated multi-instance E2E is impractical.

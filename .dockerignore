@@ -1,0 +1,36 @@
+# dependencies & build output (rebuilt in image)
+node_modules
+dist
+bundle
+coverage
+*.tgz
+*.tsbuildinfo
+
+# env & local secrets - never bake into the image
+*.env
+.env
+.env.*
+!.env.example
+secrets/
+!secrets/.gitkeep
+
+# VCS / IDE / OS
+.git
+.gitignore
+.cursor
+.idea
+.vscode
+.DS_Store
+
+# docs & local tooling (not needed at runtime)
+*.md
+!package.json
+spec/
+angie/
+docker-compose*.yml
+.dockerignore
+Dockerfile
+
+# tests
+**/*.spec.ts
+**/__tests__/
